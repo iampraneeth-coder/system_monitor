@@ -269,22 +269,21 @@ def process_video():
       #else:
       #  return 'Invalid image file'
 
-      return render_template("processing.html", video_url=video_url, watermark_text=watermark_text)
+      return render_template("processing.html", video_url=video_url, watermark_text=watermark_text, watermark_position=watermark_position, watermark_font=watermark_font, watermark_size=watermark_size, watermark_color=watermark_color, watermark_opacity=watermark_opacity, image_watermark_filename=image_watermark_filename)
     except Exception as e:
         print(f"Error in process_video: {e}")
         return f"An error occurred: {e}"  # Display a simple error message
 
-@app.route('/stream', methods=['POST'])
-def stream():
+@app.route('/stream/<path:video_url>')
+def stream(video_url):
     try:
-        video_url = request.form["video_url"]
-        watermark_text = request.form["watermark_text"]
-        watermark_position = request.form["watermark_position"]
-        watermark_font = request.form["watermark_font"]
-        watermark_size = int(request.form["watermark_size"])
-        watermark_color = request.form["watermark_color"]
-        watermark_opacity = float(request.form["watermark_opacity"])
-        image_watermark_filename = request.form.get("image_watermark_filename") #Get the water mark
+        watermark_text = request.args.get('watermark_text')
+        watermark_position = request.args.get('watermark_position')
+        watermark_font = request.args.get('watermark_font')
+        watermark_size = int(request.args.get('watermark_size'))
+        watermark_color = request.args.get('watermark_color')
+        watermark_opacity = float(request.args.get('watermark_opacity'))
+        image_watermark_filename = request.args.get('image_watermark_filename') #Get the water mark
 
         return Response(event_stream(video_url, watermark_text, watermark_position, watermark_font, watermark_size, watermark_color, watermark_opacity, image_watermark_filename), mimetype="text/event-stream")
     except Exception as e:

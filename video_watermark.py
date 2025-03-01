@@ -280,7 +280,12 @@ def stream(video_url):
         watermark_text = request.args.get('watermark_text')
         watermark_position = request.args.get('watermark_position')
         watermark_font = request.args.get('watermark_font')
-        watermark_size = int(request.args.get('watermark_size'))
+        watermark_size = request.args.get('watermark_size') #Do not directly cast
+        if watermark_size: #Only cast if not none
+            watermark_size = int(watermark_size)
+        else:
+            watermark_size = 24 #Default Size
+
         watermark_color = request.args.get('watermark_color')
         watermark_opacity = float(request.args.get('watermark_opacity'))
         image_watermark_filename = request.args.get('image_watermark_filename') #Get the water mark

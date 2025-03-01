@@ -10,7 +10,7 @@
         Watermark: <progress id="watermark_progress" value="0" max="100"></progress> <span id="watermark_percent">0%</span>
     </div>
     <div id="video_link" style="display:none;">
-        <a href="/videos/watermarked_{{ video_url|urlsplit }}">View Watermarked Video</a>
+        <a href="/videos/watermarked_{{ video_url }}">View Watermarked Video</a>
     </div>
     <script>
         const videoUrl = "{{ video_url }}";
@@ -19,74 +19,71 @@
         const watermarkProgress = document.getElementById('watermark_progress');
         const watermarkPercent = document.getElementById('watermark_percent');
         const videoLink = document.getElementById('video_link');
+</script>
+<form id="hidden-form" action="/stream" method="POST" style="display:none;">
+    <input type="hidden" name="video_url" value="{{ video_url }}">
+    <input type="hidden" name="watermark_text" value="{{ request.form['watermark_text'] }}">
+    <input type="hidden" name="watermark_position" value="{{ request.form['watermark_position'] }}">
+    <input type="hidden" name="watermark_font" value="{{ request.form['watermark_font'] }}">
+    <input type="hidden" name="watermark_size" value="{{ request.form['watermark_size'] }}">
+    <input type="hidden" name="watermark_color" value="{{ request.form['watermark_color'] }}">
+    <input type="hidden" name="watermark_opacity" value="{{ request.form['watermark_opacity'] }}">
+    <input type="hidden" name="image_watermark_filename" value="{{ request.files['image_watermark'].filename if request.files['image_watermark'] else '' }}">
 
-        if (!String.prototype.urlsplit) {  // Define a safe filter if it's missing
-            String.prototype.urlsplit = function() {
-                let filename = this.split('/').pop();
-                filename = filename.split('?')[0]; // Remove query parameters
-                return filename;
-            }
-        }
+</form>
+<script>
+    function sendStreamRequest(){
+      //Grab elements from the page.
+      const form = document.querySelector('form');
 
-        function sendStreamRequest(){
-          //Grab elements from the page.
-          const form = document.querySelector('form');
-
-          const formData = new FormData(form); //Use existing form.
-          const eventSource = new EventSource('/stream', { method: 'POST', body: formData}); //Encode the URL
+      const formData = new FormData(document.getElementById("hidden-form")); //Use existing form.
+      const eventSource = new EventSource('/stream', { method: 'POST', body: formData}); //Encode the URL
 
 
-          let downloadComplete = false;
+      let downloadComplete = false;
 
-          eventSource.onmessage = function(event) {
-              console.log("Received data:", event.data);
-              if (event.data === "complete") {
-                  downloadProgress.value = 100;
-                  downloadPercent.textContent = "100%";
-                  watermarkProgress.value = 100;
-                  watermarkPercent.textContent = "100%";
-                  videoLink.style.display = "block";
-                  eventSource.close();
-              } else if (event.data === "error") {
-                  console.error("Error during processing");
-                  document.getElementById("progress").textContent = "An error occurred during processing.";
-                  eventSource.close();
-              } else {
-                  let percentage = parseInt(event.data);
-                  if (!downloadComplete) {
-                      downloadProgress.value = percentage;
-                      downloadPercent.textContent = percentage + "%";
-                      if (percentage === 100) {
-                          downloadComplete = true;
-                          watermarkProgress.value = 0;
-                          watermarkPercent.textContent = "0%";
-                      }
-                  } else {
-                     watermarkProgress.value = percentage;
-                     watermarkPercent.textContent = percentage + "%";
-                  }
-              }
-          };
-
-          eventSource.onerror = function(error) {
-              console.error("EventSource failed:", error);
-              document.getElementById("progress").textContent = "EventSource connection failed.";
+      eventSource.onmessage = function(event) {
+          console.log("Received data:", event.data);
+          if (event.data.startsWith("complete")) {
+              downloadProgress.value = 100;
+              downloadPercent.textContent = "100%";
+              watermarkProgress.value = 100;
+              watermarkPercent.textContent = "100%";
+              videoLink.style.display = "block";
               eventSource.close();
-          };
-        }
+              var parts = event.data.split(':');
+              var filename = parts[1];
 
-        sendStreamRequest();
-    </script>
-    <form id="hidden-form" action="/stream" method="POST" style="display:none;">
-        <input type="hidden" name="video_url" value="{{ video_url }}">
-        <input type="hidden" name="watermark_text" value="{{ request.form['watermark_text'] }}">
-        <input type="hidden" name="watermark_position" value="{{ request.form['watermark_position'] }}">
-        <input type="hidden" name="watermark_font" value="{{ request.form['watermark_font'] }}">
-        <input type="hidden" name="watermark_size" value="{{ request.form['watermark_size'] }}">
-        <input type="hidden" name="watermark_color" value="{{ request.form['watermark_color'] }}">
-        <input type="hidden" name="watermark_opacity" value="{{ request.form['watermark_opacity'] }}">
-        <input type="hidden" name="image_watermark_filename" value="{{ request.files['image_watermark'].filename if request.files['image_watermark'] else '' }}">
+              videoLink.href = '/videos/' + filename;
+          } else if (event.data.startsWith("error")) {
+              console.error("Error during processing");
+              document.getElementById("progress").textContent = "An error occurred during processing.";
+              eventSource.close();
+          } else {
+              let percentage = parseInt(event.data);
+              if (!downloadComplete) {
+                  downloadProgress.value = percentage;
+                  downloadPercent.textContent = percentage + "%";
+                  if (percentage === 100) {
+                      downloadComplete = true;
+                      watermarkProgress.value = 0;
+                      watermarkPercent.textContent = "0%";
+                  }
+              } else {
+                 watermarkProgress.value = percentage;
+                 watermarkPercent.textContent = percentage + "%";
+              }
+          }
+      };
 
-    </form>
+      eventSource.onerror = function(error) {
+          console.error("EventSource failed:", error);
+          document.getElementById("progress").textContent = "EventSource connection failed.";
+          eventSource.close();
+      };
+    }
+
+    sendStreamRequest();
+</script>
 </body>
 </html>

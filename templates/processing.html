@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Processing Video</title>
+</head>
+<body>
+    <h1>Processing Video</h1>
+    <div id="progress">
+        Download: <progress id="download_progress" value="0" max="100"></progress> <span id="download_percent">0%</span><br>
+        Watermark: <progress id="watermark_progress" value="0" max="100"></progress> <span id="watermark_percent">0%</span>
+    </div>
+    <div id="video_link" style="display:none;">
+        <a href="/videos/watermarked_{{ video_url|urlsplit }}">View Watermarked Video</a>
+    </div>
+    <script>
+        const videoUrl = "{{ video_url }}";
+        const downloadProgress = document.getElementById('download_progress');
+        const downloadPercent = document.getElementById('download_percent');
+        const watermarkProgress = document.getElementById('watermark_progress');
+        const watermarkPercent = document.getElementById('watermark_percent');
+        const videoLink = document.getElementById('video_link');
+
+        if (!String.prototype.urlsplit) {  // Define a safe filter if it's missing
+            String.prototype.urlsplit = function() {
+                let filename = this.split('/').pop();
+                filename = filename.split('?')[0]; // Remove query parameters
+                return filename;
+            }
+        }
+
+        const eventSource = new EventSource('/stream/' + encodeURIComponent(videoUrl)); //Encode the URL
+
+        let downloadComplete = false;
+
+        eventSource.onmessage = function(event) {
+            console.log("Received data:", event.data);
+            if (event.data === "complete") {
+                downloadProgress.value = 100;
+                downloadPercent.textContent = "100%";
+                watermarkProgress.value = 100;
+                watermarkPercent.textContent = "100%";
+                videoLink.style.display = "block";
+                eventSource.close();
+            } else if (event.data === "error") {
+                console.error("Error during processing");
+                document.getElementById("progress").textContent = "An error occurred during processing.";
+                eventSource.close();
+            } else {
+                let percentage = parseInt(event.data);
+                if (!downloadComplete) {
+                    downloadProgress.value = percentage;
+                    downloadPercent.textContent = percentage + "%";
+                    if (percentage === 100) {
+                        downloadComplete = true;
+                        watermarkProgress.value = 0;
+                        watermarkPercent.textContent = "0%";
+                    }
+                } else {
+                   watermarkProgress.value = percentage;
+                   watermarkPercent.textContent = percentage + "%";
+                }
+            }
+        };
+
+        eventSource.onerror = function(error) {
+            console.error("EventSource failed:", error);
+            document.getElementById("progress").textContent = "EventSource connection failed.";
+            eventSource.close();
+        };
+    </script>
+</body>
+</html>

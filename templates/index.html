@@ -2,12 +2,58 @@
 <html>
 <head>
     <title>Video Watermarker</title>
+    <style>
+        /* Some basic styling to make things look a bit better */
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Video Watermarker</h1>
-    <form action="/process" method="post">
-        <label for="video_url">Video URL:</label><br>
-        <input type="url" id="video_url" name="video_url" size="60"><br><br>
+    <form action="/process" method="post" enctype="multipart/form-data">
+        <label for="video_url">Video URL:</label>
+        <input type="url" id="video_url" name="video_url" size="60"><br>
+
+        <!-- Watermark Text -->
+        <label for="watermark_text">Watermark Text:</label>
+        <input type="text" id="watermark_text" name="watermark_text" value="Your Watermark"><br>
+
+        <!-- Watermark Position -->
+        <label for="watermark_position">Watermark Position:</label>
+        <select id="watermark_position" name="watermark_position">
+            <option value="top-left">Top Left</option>
+            <option value="top-right">Top Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="bottom-right">Bottom Right</option>
+            <option value="center">Center</option>
+        </select><br>
+
+        <!-- Font Selection (Limited - Provide options) -->
+        <label for="watermark_font">Watermark Font:</label>
+        <select id="watermark_font" name="watermark_font">
+            <option value="DejaVuSans-Bold.ttf">DejaVuSans-Bold</option>
+            <option value="DejaVuSans.ttf">DejaVuSans</option>
+            <!-- Add more fonts available on your system -->
+        </select><br>
+
+        <!-- Watermark Size -->
+        <label for="watermark_size">Watermark Size:</label>
+        <input type="number" id="watermark_size" name="watermark_size" value="24" min="8" max="72"><br>
+
+        <!-- Watermark Color -->
+        <label for="watermark_color">Watermark Color:</label>
+        <input type="color" id="watermark_color" name="watermark_color" value="#FFFFFF"><br>
+
+        <!-- Watermark Opacity -->
+        <label for="watermark_opacity">Watermark Opacity:</label>
+        <input type="range" id="watermark_opacity" name="watermark_opacity" min="0" max="1" step="0.1" value="1.0"><br>
+
+        <!-- Image Watermark (File Upload) -->
+        <label for="image_watermark">Image Watermark (Optional):</label>
+        <input type="file" id="image_watermark" name="image_watermark" accept="image/*"><br>
+
         <input type="submit" value="Add Watermark">
     </form>
 </body>
